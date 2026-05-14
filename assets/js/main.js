@@ -63,6 +63,7 @@ const elements = {
     previewTabs: document.getElementById('preview-tabs'),
     previewContainer: document.getElementById('preview-container'),
     btnGenerate: document.getElementById('btn-generate'),
+    btnDownloadAgain: document.getElementById('btn-download-again'),
     btnPrev5: document.getElementById('btn-prev-5'),
 
     // Step 6
@@ -925,4 +926,8 @@ elements.btnGenerate.onclick = async () => {
         showToast('Gagal membuat PDF: ' + err.message, 'error');
         hideLoading();
     }
+};
+
+elements.btnDownloadAgain.onclick = () => {
+    elements.btnGenerate.click();
 };
