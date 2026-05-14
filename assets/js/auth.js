@@ -83,6 +83,16 @@ function getSessionId() {
 
 // Login Function
 async function login(email, password) {
+    // Pastikan Firebase sudah siap
+    if (!auth || !database) {
+        console.log('Firebase belum siap, mencoba inisialisasi...');
+        await initAuth();
+    }
+    
+    if (!auth) {
+        return { success: false, message: 'Layanan Firebase gagal dimuat. Silakan cek koneksi internet dan refresh halaman.' };
+    }
+
     try {
         const result = await auth.signInWithEmailAndPassword(email, password);
         const user = result.user;
