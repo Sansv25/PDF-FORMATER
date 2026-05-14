@@ -191,6 +191,8 @@ async function checkSession() {
 
         if (latestSessionId && localSid && latestSessionId !== localSid) {
             console.error('Security: Session mismatch! Kicking...');
+            // Paksa login ulang untuk sinkronisasi sesi
+            window.location.href = 'login.html';
             return false; 
         }
 
