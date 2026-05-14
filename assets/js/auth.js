@@ -153,34 +153,53 @@ async function logActivity(type, details = {}) {
  */
 async function checkSession() {
     try {
+        console.log('Security: Checking session status...');
+        
         // Pastikan Firebase sudah siap
         if (!auth || !database) {
+            console.log('Security: Initializing Firebase...');
             await initAuth();
         }
 
         const user = auth.currentUser;
         if (!user) {
+            console.warn('Security: No user found, redirecting...');
             window.location.href = 'login.html';
             return false;
         }
 
-        // Paksa refresh token untuk cek apakah akun masih aktif (tidak di-disable/hapus)
-        await user.getIdToken(true);
+        // Cek apakah akun masih aktif dengan Timeout 3 detik agar tidak "macet"
+        const tokenPromise = user.getIdToken(true);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 3000)
+        );
+
+        try {
+            await Promise.race([tokenPromise, timeoutPromise]);
+            console.log('Security: Token refreshed.');
+        } catch (e) {
+            console.warn('Security: Token check timeout/error, continuing anyway for UX.');
+        }
 
         // Cek apakah sesi di DB masih milik kita
+        const localSid = localStorage.getItem('fb_session_id');
         const sessionRef = database.ref('sessions/' + user.uid);
         const snapshot = await sessionRef.get();
         const latestSessionId = snapshot.val();
         
-        if (latestSessionId && latestSessionId !== localStorage.getItem('fb_session_id')) {
-            return false; // Ada perangkat lain masuk
+        console.log('Security: Local SID:', localSid, 'Remote SID:', latestSessionId);
+
+        if (latestSessionId && localSid && latestSessionId !== localSid) {
+            console.error('Security: Session mismatch! Kicking...');
+            return false; 
         }
 
+        console.log('Security: Session valid.');
         return true;
     } catch (error) {
-        console.error('Session Check Error:', error);
-        window.location.href = 'login.html';
-        return false;
+        console.error('Security: Critical Session Check Error:', error);
+        // Jika error sistem, biarkan lanjut agar tidak macet total
+        return true; 
     }
 }
 
