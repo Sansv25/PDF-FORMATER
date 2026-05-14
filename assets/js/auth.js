@@ -6,22 +6,26 @@
 let app, auth, database;
 
 function initAuth() {
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase SDK not loaded!');
-        return;
-    }
+    try {
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase SDK tidak terload dengan benar.');
+        }
 
-    if (!firebase.apps.length) {
-        app = firebase.initializeApp(window.firebaseConfig);
-    } else {
-        app = firebase.app();
-    }
-    
-    auth = firebase.auth();
-    database = firebase.database(); // Initialize Realtime Database
+        if (!window.firebaseConfig) {
+            throw new Error('Konfigurasi Firebase (firebase-config.js) tidak ditemukan.');
+        }
 
-    // Monitor Auth State
-    auth.onAuthStateChanged((user) => {
+        if (!firebase.apps.length) {
+            app = firebase.initializeApp(window.firebaseConfig);
+        } else {
+            app = firebase.app();
+        }
+        
+        auth = firebase.auth();
+        database = firebase.database();
+
+        // Monitor Auth State
+        auth.onAuthStateChanged((user) => {
         const isLoginPage = window.location.pathname.includes('login.html');
         
         if (user) {
@@ -51,7 +55,10 @@ function initAuth() {
                 window.location.href = 'login.html';
             }
         }
-    });
+        });
+    } catch (error) {
+        console.error('Auth Initialization Error:', error);
+    }
 }
 
 // Generate or get unique Session ID for this device/browser
