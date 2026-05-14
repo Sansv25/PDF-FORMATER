@@ -788,7 +788,6 @@ elements.btnGenerate.onclick = async () => {
     
     try {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
         const telkomRed = [227, 25, 55];
         const pageWidth = 210;
         const pageHeight = 297;
@@ -808,10 +807,9 @@ elements.btnGenerate.onclick = async () => {
             // Buat PDF Baru untuk setiap Sheet
             const doc = new jsPDF('p', 'mm', 'a4');
 
-            // 1. Header Sangat Ringkas (Condensed - 15mm)
+            // 1. Header (15mm)
             doc.setFillColor(...telkomRed);
             doc.rect(0, 0, pageWidth, 15, 'F');
-            
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
@@ -820,14 +818,15 @@ elements.btnGenerate.onclick = async () => {
             doc.setFont('helvetica', 'normal');
             doc.text(sheet.subtitle || '', 10, 11);
 
-            // 2. Scaling
+            // 2. Scaling dengan Safety Margin
             const startY = 18;
-            const endY = 287; 
+            const endY = 292; // Gunakan ruang lebih luas
             const availableHeight = endY - startY;
             
             const headHeight = 10;
             const bodyRowsCount = sheet.activities.length;
-            const bodyRowHeight = (availableHeight - headHeight) / bodyRowsCount;
+            // Kurangi 0.5mm untuk safety agar tidak tumpah ke hal 2
+            const bodyRowHeight = ((availableHeight - headHeight) / bodyRowsCount) - 0.1;
 
             // 3. Pre-load Images
             const processedImages = new Map();
@@ -860,6 +859,7 @@ elements.btnGenerate.onclick = async () => {
                 head: [['NO', 'AKTIFITAS PEKERJAAN', 'FREKUENSI', 'FOTO PEKERJAAN']],
                 body: tableRows,
                 theme: 'grid',
+                showHead: 'firstPage', // Hanya munculkan header di awal
                 styles: {
                     fontSize: 7,
                     cellPadding: 0.5,
@@ -909,8 +909,8 @@ elements.btnGenerate.onclick = async () => {
                         }
                     }
                 },
-                margin: { left: 10, right: 10 },
-                pageBreak: 'avoid'
+                margin: { top: 18, bottom: 5, left: 10, right: 10 },
+                pageBreak: 'avoid' // Paksa satu halaman
             });
 
             // Simpan setiap sheet sebagai file PDF terpisah
