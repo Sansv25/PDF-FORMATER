@@ -818,15 +818,15 @@ elements.btnGenerate.onclick = async () => {
             doc.setFont('helvetica', 'normal');
             doc.text(sheet.subtitle || '', 10, 11);
 
-            // 2. Scaling dengan Safety Margin
+            // 2. Scaling dengan Safety Margin yang lebih longgar
             const startY = 18;
-            const endY = 292; // Gunakan ruang lebih luas
+            const endY = 290; 
             const availableHeight = endY - startY;
             
             const headHeight = 10;
             const bodyRowsCount = sheet.activities.length;
-            // Kurangi 0.5mm untuk safety agar tidak tumpah ke hal 2
-            const bodyRowHeight = ((availableHeight - headHeight) / bodyRowsCount) - 0.1;
+            // Gunakan Math.floor dan kurangi 1mm agar benar-benar aman
+            const bodyRowHeight = Math.floor((availableHeight - headHeight) / bodyRowsCount) - 1;
 
             // 3. Pre-load Images
             const processedImages = new Map();
@@ -854,12 +854,15 @@ elements.btnGenerate.onclick = async () => {
                 ''
             ]);
 
+            // Paksa kembali ke halaman 1 agar satu grup dengan header merah
+            doc.setPage(1);
+
             doc.autoTable({
                 startY: startY,
                 head: [['NO', 'AKTIFITAS PEKERJAAN', 'FREKUENSI', 'FOTO PEKERJAAN']],
                 body: tableRows,
                 theme: 'grid',
-                showHead: 'firstPage', // Hanya munculkan header di awal
+                showHead: 'firstPage',
                 styles: {
                     fontSize: 7,
                     cellPadding: 0.5,
@@ -909,8 +912,8 @@ elements.btnGenerate.onclick = async () => {
                         }
                     }
                 },
-                margin: { top: 18, bottom: 5, left: 10, right: 10 },
-                pageBreak: 'avoid' // Paksa satu halaman
+                margin: { top: 0, bottom: 0, left: 10, right: 10 },
+                pageBreak: 'avoid'
             });
 
             // Simpan setiap sheet sebagai file PDF terpisah
