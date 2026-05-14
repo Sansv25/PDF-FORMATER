@@ -902,7 +902,8 @@ elements.btnGenerate.onclick = async () => {
                             });
                         }
                     }
-                },
+                }
+            },
                 margin: { left: 10, right: 10 },
                 pageBreak: 'avoid'
             });
