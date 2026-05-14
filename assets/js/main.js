@@ -819,14 +819,16 @@ elements.btnGenerate.onclick = async () => {
             doc.setFont('helvetica', 'normal');
             doc.text(sheet.subtitle || '', 10, 11);
 
-            // 2. Hitung Auto-Scaling agar MUAT SATU LEMBAR
+            // 2. Scaling
             const startY = 18;
             const endY = 287; 
             const availableHeight = endY - startY;
-            const totalRows = sheet.activities.length + 1; 
-            const calculatedRowHeight = availableHeight / totalRows;
+            
+            const headHeight = 10;
+            const bodyRowsCount = sheet.activities.length;
+            const bodyRowHeight = (availableHeight - headHeight) / bodyRowsCount;
 
-            // 3. Pre-load Images untuk sheet ini
+            // 3. Pre-load Images
             const processedImages = new Map();
             for (const activity of sheet.activities) {
                 const selectedIndices = state.selectedPhotos[sheet.name]?.[activity.row] || [];
@@ -844,12 +846,12 @@ elements.btnGenerate.onclick = async () => {
                 }
             }
 
-            // 4. Render Tabel
+            // 4. Table
             const tableRows = sheet.activities.map((act, i) => [
                 i + 1,
                 act.text,
                 act.volume,
-                '' // Photo
+                ''
             ]);
 
             doc.autoTable({
@@ -860,7 +862,7 @@ elements.btnGenerate.onclick = async () => {
                 styles: {
                     fontSize: 7,
                     cellPadding: 0.5,
-                    minCellHeight: calculatedRowHeight,
+                    minCellHeight: bodyRowHeight,
                     valign: 'middle',
                     overflow: 'linebreak',
                     lineWidth: 0.1,
@@ -870,8 +872,9 @@ elements.btnGenerate.onclick = async () => {
                     fillColor: telkomRed, 
                     textColor: [255, 255, 255], 
                     fontSize: 8,
-                    minCellHeight: calculatedRowHeight,
-                    halign: 'center'
+                    minCellHeight: headHeight,
+                    halign: 'center',
+                    valign: 'middle'
                 },
                 columnStyles: {
                     0: { cellWidth: 10, halign: 'center' },
@@ -886,28 +889,27 @@ elements.btnGenerate.onclick = async () => {
                         
                         if (activity) {
                             const images = processedImages.get(activity.row);
-                            
                             if (images && images.length > 0) {
-                            const padding = 0.5;
-                            const imgCount = Math.min(images.length, 2);
-                            const imgWidth = (data.cell.width - (padding * (imgCount + 1))) / imgCount;
-                            const imgHeight = data.cell.height - (padding * 2);
+                                const padding = 0.5;
+                                const imgCount = Math.min(images.length, 2);
+                                const imgWidth = (data.cell.width - (padding * (imgCount + 1))) / imgCount;
+                                const imgHeight = data.cell.height - (padding * 2);
 
-                            images.slice(0, 2).forEach((imgUrl, i) => {
-                                const x = data.cell.x + padding + (i * (imgWidth + padding));
-                                const y = data.cell.y + padding;
-                                try {
-                                    doc.addImage(imgUrl, 'JPEG', x, y, imgWidth, imgHeight);
-                                } catch (e) {
-                                    console.error('PDF Image Error', e);
-                                }
-                            });
+                                images.slice(0, 2).forEach((imgUrl, i) => {
+                                    const x = data.cell.x + padding + (i * (imgWidth + padding));
+                                    const y = data.cell.y + padding;
+                                    try {
+                                        doc.addImage(imgUrl, 'JPEG', x, y, imgWidth, imgHeight);
+                                    } catch (e) {
+                                        console.error('PDF Image Error', e);
+                                    }
+                                });
+                            }
                         }
                     }
-                }
-            },
-            margin: { left: 10, right: 10 },
-            pageBreak: 'avoid'
+                },
+                margin: { left: 10, right: 10 },
+                pageBreak: 'avoid'
             });
 
             // Simpan setiap sheet sebagai file PDF terpisah
