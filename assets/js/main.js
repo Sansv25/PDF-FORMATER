@@ -864,6 +864,16 @@ elements.btnGenerate.onclick = async () => {
         
         elements.finalFilename.innerText = filename;
         goToStep(6);
+        
+        // Log activity
+        if (window.authApp && window.authApp.logActivity) {
+            window.authApp.logActivity('GENERATE_PDF', { 
+                filename: filename,
+                sheetsCount: state.sheets.length,
+                totalActivities: state.sheets.reduce((acc, s) => acc + s.activities.length, 0)
+            });
+        }
+
         showToast('PDF berhasil didownload', 'success');
         hideLoading();
 

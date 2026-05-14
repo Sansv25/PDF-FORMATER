@@ -39,10 +39,11 @@ function initAuth() {
                 if (!activeSessionId) {
                     // If no session in DB, claim it
                     await sessionRef.set(currentSessionId);
+                    logActivity('SESSION_CLAIMED', { info: 'First time opening on this device' });
                 } else if (activeSessionId !== currentSessionId) {
-                    // If another session is active, kick this one or the other?
-                    // To make "Last Device Wins": Update DB with current session
+                    // If another session is active, claim it (Last Device Wins)
                     await sessionRef.set(currentSessionId);
+                    logActivity('SESSION_CLAIMED', { info: 'Kicking other device' });
                 }
 
                 // Listen for FUTURE session changes (if another device logs in later)
@@ -108,6 +109,34 @@ async function logout() {
     }
 }
 
+/**
+ * LOGGING SYSTEM
+ * Simpan riwayat aktivitas ke Firebase Realtime Database
+ */
+async function logActivity(type, details = {}) {
+    if (!auth.currentUser) return;
+    
+    try {
+        const user = auth.currentUser;
+        const logRef = database.ref('logs').push();
+        
+        await logRef.set({
+            uid: user.uid,
+            email: user.email,
+            type: type, // 'LOGIN', 'GENERATE_PDF', etc.
+            details: details,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            device: {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                screen: `${window.screen.width}x${window.screen.height}`
+            }
+        });
+    } catch (error) {
+        console.error('Logging Error:', error);
+    }
+}
+
 // Update UI (Profile Dropdown, etc.)
 function updateUIForUser(user) {
     const profileContainer = document.getElementById('user-profile');
@@ -142,5 +171,6 @@ document.addEventListener('DOMContentLoaded', initAuth);
 // Export functions to window
 window.authApp = {
     login,
-    logout
+    logout,
+    logActivity
 };
