@@ -153,6 +153,11 @@ async function logActivity(type, details = {}) {
  */
 async function checkSession() {
     try {
+        // Pastikan Firebase sudah siap
+        if (!auth || !database) {
+            await initAuth();
+        }
+
         const user = auth.currentUser;
         if (!user) {
             window.location.href = 'login.html';
