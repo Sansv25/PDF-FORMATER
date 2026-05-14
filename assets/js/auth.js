@@ -36,14 +36,11 @@ function initAuth() {
                 const snapshot = await sessionRef.get();
                 const activeSessionId = snapshot.val();
 
-                if (!activeSessionId) {
-                    // If no session in DB, claim it
+                if (!activeSessionId || activeSessionId !== currentSessionId) {
+                    // Sinkronisasi paksa: Update DB agar sama dengan browser saat ini
+                    console.log('Security: Syncing session ID to DB...');
                     await sessionRef.set(currentSessionId);
-                    logActivity('SESSION_CLAIMED', { info: 'First time opening on this device' });
-                } else if (activeSessionId !== currentSessionId) {
-                    // If another session is active, claim it (Last Device Wins)
-                    await sessionRef.set(currentSessionId);
-                    logActivity('SESSION_CLAIMED', { info: 'Kicking other device' });
+                    logActivity('SESSION_CLAIMED', { info: 'Syncing/Claiming session' });
                 }
 
                 // Listen for FUTURE session changes (if another device logs in later)
