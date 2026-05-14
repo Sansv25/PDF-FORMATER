@@ -25,36 +25,45 @@ function initAuth() {
         database = firebase.database();
 
         // Monitor Auth State
-        auth.onAuthStateChanged((user) => {
-        const isLoginPage = window.location.pathname.includes('login.html');
-        
-        if (user) {
-            console.log('User is logged in:', user.email);
+        auth.onAuthStateChanged(async (user) => {
+            const isLoginPage = window.location.pathname.includes('login.html');
             
-            // Check for Single Session
-            const currentSessionId = getSessionId();
-            const sessionRef = database.ref('sessions/' + user.uid);
-            
-            // Listen for session changes
-            sessionRef.on('value', (snapshot) => {
+            if (user) {
+                const currentSessionId = getSessionId();
+                const sessionRef = database.ref('sessions/' + user.uid);
+                
+                // Get current active session from DB
+                const snapshot = await sessionRef.get();
                 const activeSessionId = snapshot.val();
-                if (activeSessionId && activeSessionId !== currentSessionId) {
-                    console.warn('Another device logged in. Logging out...');
-                    alert('Akun Anda telah login di perangkat lain. Anda akan dikeluarkan.');
-                    logout();
-                }
-            });
 
-            if (isLoginPage) {
-                window.location.href = 'index.html';
+                if (!activeSessionId) {
+                    // If no session in DB, claim it
+                    await sessionRef.set(currentSessionId);
+                } else if (activeSessionId !== currentSessionId) {
+                    // If another session is active, kick this one or the other?
+                    // To make "Last Device Wins": Update DB with current session
+                    await sessionRef.set(currentSessionId);
+                }
+
+                // Listen for FUTURE session changes (if another device logs in later)
+                sessionRef.on('value', (snapshot) => {
+                    const latestSessionId = snapshot.val();
+                    if (latestSessionId && latestSessionId !== currentSessionId) {
+                        alert('Akun Anda telah login di perangkat lain. Anda akan dikeluarkan.');
+                        logout();
+                    }
+                });
+
+                if (isLoginPage) {
+                    window.location.href = 'index.html';
+                }
+                updateUIForUser(user);
+            } else {
+                console.log('User is logged out');
+                if (!isLoginPage) {
+                    window.location.href = 'login.html';
+                }
             }
-            updateUIForUser(user);
-        } else {
-            console.log('User is logged out');
-            if (!isLoginPage) {
-                window.location.href = 'login.html';
-            }
-        }
         });
     } catch (error) {
         console.error('Auth Initialization Error:', error);
