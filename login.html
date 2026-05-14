@@ -148,6 +148,38 @@
             gap: 8px;
         }
 
+        .warning-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.8125rem;
+            color: #4b5563;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
         .footer-text {
             text-align: center;
             margin-top: 1.5rem;
@@ -165,6 +197,12 @@
             </div>
             <h1>Selamat Datang</h1>
             <p>Silakan masuk ke akun Anda</p>
+        </div>
+
+        <div class="warning-box">
+            <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px; color: #d97706;">warning</span>
+            <strong>PERINGATAN KEAMANAN:</strong><br>
+            Dilarang keras membagikan akun (sharing account). Jika ditemukan pelanggaran akses simultan, akun akan <strong>DIBLOKIR PERMANEN</strong> secara otomatis oleh sistem.
         </div>
 
         <div id="error-box" class="error-message">
@@ -187,6 +225,11 @@
                     <span class="material-icons-round">lock</span>
                     <input type="password" id="password" placeholder="••••••••" required>
                 </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="agree-terms" required>
+                <label for="agree-terms">Saya setuju dan berjanji tidak akan menyebarkan akun ini kepada pihak lain.</label>
             </div>
 
             <button type="submit" class="btn-login" id="btn-submit">
@@ -213,10 +256,17 @@
         const errorBox = document.getElementById('error-box');
         const errorText = document.getElementById('error-text');
         const btnSubmit = document.getElementById('btn-submit');
+        const agreeCheckbox = document.getElementById('agree-terms');
 
         loginForm.onsubmit = async (e) => {
             e.preventDefault();
             
+            if (!agreeCheckbox.checked) {
+                errorText.innerText = 'Anda harus menyetujui syarat keamanan.';
+                errorBox.style.display = 'flex';
+                return;
+            }
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
