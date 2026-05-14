@@ -278,7 +278,8 @@
             const result = await window.authApp.login(email, password);
             
             if (result.success) {
-                // auth.onAuthStateChanged in auth.js will handle redirect
+                // Langsung pindah halaman agar terasa cepat
+                window.location.href = 'index.html';
             } else {
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = 'Masuk <span class="material-icons-round">login</span>';
