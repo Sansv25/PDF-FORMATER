@@ -32,18 +32,32 @@ function initAuth() {
                 const currentSessionId = getSessionId();
                 const sessionRef = database.ref('sessions/' + user.uid);
                 
-                // Get current active session from DB
-                const snapshot = await sessionRef.get();
-                const activeSessionId = snapshot.val();
+                try {
+                    // Get current active session from DB
+                    const snapshot = await sessionRef.get();
+                    const activeSessionId = snapshot.val();
 
-                if (!activeSessionId || activeSessionId !== currentSessionId) {
-                    // Sinkronisasi paksa: Update DB agar sama dengan browser saat ini
-                    console.log('Security: Syncing session ID to DB...');
-                    await sessionRef.set(currentSessionId);
-                    logActivity('SESSION_CLAIMED', { info: 'Syncing/Claiming session' });
+                    if (!activeSessionId || activeSessionId !== currentSessionId) {
+                        console.log('Security: Syncing session ID to DB...');
+                        await sessionRef.set(currentSessionId);
+                        logActivity('SESSION_CLAIMED', { info: 'Syncing/Claiming session' });
+                    }
+
+                    // Jika berhasil sinkron dan di halaman login, baru ke index
+                    if (isLoginPage) {
+                        window.location.href = 'index.html';
+                    }
+                } catch (err) {
+                    console.error('Security: Session sync failed!', err);
+                    // JANGAN pindah ke index jika gagal sinkron (mencegah loop)
+                    if (!isLoginPage) {
+                        alert('Gagal sinkronisasi sesi. Periksa Firebase Rules Anda.');
+                        window.location.href = 'login.html';
+                    }
+                    return;
                 }
 
-                // Listen for FUTURE session changes (if another device logs in later)
+                // Listen for FUTURE session changes
                 sessionRef.on('value', (snapshot) => {
                     const latestSessionId = snapshot.val();
                     if (latestSessionId && latestSessionId !== currentSessionId) {
@@ -52,9 +66,6 @@ function initAuth() {
                     }
                 });
 
-                if (isLoginPage) {
-                    window.location.href = 'index.html';
-                }
                 updateUIForUser(user);
             } else {
                 console.log('User is logged out');
@@ -70,10 +81,10 @@ function initAuth() {
 
 // Generate or get unique Session ID for this device/browser
 function getSessionId() {
-    let sid = localStorage.getItem('app_session_id');
+    let sid = localStorage.getItem('fb_session_id');
     if (!sid) {
         sid = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('app_session_id', sid);
+        localStorage.setItem('fb_session_id', sid);
     }
     return sid;
 }
