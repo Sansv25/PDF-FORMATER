@@ -208,24 +208,24 @@ async function handleExcelFile(file) {
                 // Ambil Judul dari Baris 1
                 const row1 = sheet.getRow(1);
                 if (row1) {
-                    title = row1.getCell(2).value || row1.getCell(1).value || '';
+                    title = row1.getCell(1).value || '';
                 }
 
-                // Ambil Subjudul dari Baris 2
+                // Ambil Identitas Gedung dari Baris 2
                 const row2 = sheet.getRow(2);
                 if (row2) {
-                    subtitle = row2.getCell(2).value || row2.getCell(1).value || '';
+                    subtitle = row2.getCell(1).value || '';
                 }
 
                 sheet.eachRow((row, rowNumber) => {
-                    // Data dimulai dari baris 6 (baris 5 adalah header)
-                    if (rowNumber >= 6) {
+                    // Data dimulai dari baris 5 (baris 4 adalah header)
+                    if (rowNumber >= 5) {
                         const activityText = row.getCell(2).value;
                         const volume = row.getCell(6).value;
                         
                         // Validasi: pastikan ada teks aktivitas dan bukan teks header
                         if (activityText && typeof activityText === 'string' && 
-                            activityText.trim().toLowerCase() !== 'aktivitas pekerjaan') {
+                            !['aktvitas pekerjaan', 'aktifitas pekerjaan'].includes(activityText.trim().toLowerCase())) {
                             activities.push({
                                 row: rowNumber,
                                 text: activityText.trim(),
@@ -280,61 +280,71 @@ elements.btnDownloadTemplate.onclick = async () => {
     try {
         const workbook = new ExcelJS.Workbook();
         
-        const createSheet = (sheetName, gedungNo, gedungName) => {
+        const createSheet = (sheetName, identitasGedung) => {
             const sheet = workbook.addWorksheet(sheetName);
             const headerFill = { type: 'pattern', pattern:'solid', fgColor: { argb: 'FFE31937' } };
             const headerFont = { color: { argb: 'FFFFFFFF' }, bold: true };
             const centerAlignment = { vertical: 'middle', horizontal: 'center' };
 
-            // Set Title
+            // Baris 1: Judul Utama
             sheet.mergeCells('A1:F1');
             const titleCell = sheet.getCell('A1');
-            titleCell.value = 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG';
-            titleCell.font = { size: 14, bold: true };
+            titleCell.value = 'PELAKSANAAN PEKERJAAN PENGELOLAAN GEDUNG TELKOM 2025';
+            titleCell.font = { size: 12, bold: true };
             titleCell.alignment = centerAlignment;
 
-            // No Gedung & Nama Gedung (Row 3)
-            sheet.getCell('A3').value = 'No Gedung:';
-            sheet.getCell('B3').value = gedungNo;
-            sheet.getCell('D3').value = 'Nama Gedung:';
-            sheet.getCell('E3').value = gedungName;
-            sheet.getCell('A3').font = { bold: true };
-            sheet.getCell('D3').font = { bold: true };
+            // Baris 2: Sub Judul (Identitas Gedung)
+            sheet.mergeCells('A2:F2');
+            const subTitleCell = sheet.getCell('A2');
+            subTitleCell.value = identitasGedung;
+            subTitleCell.font = { size: 11, bold: true };
+            subTitleCell.alignment = centerAlignment;
 
-            // Set Headers Row 5
-            const headerRow = sheet.getRow(5);
-            headerRow.values = ['No', 'Aktivitas Pekerjaan', '', '', '', 'Frekuensi'];
-            sheet.mergeCells('B5:E5');
+            // Baris 4: Header Tabel
+            const headerRow = sheet.getRow(4);
+            headerRow.values = ['NO', 'AKTIFITAS PEKERJAAN', 'FOTO PEKERJAAN', '', '', 'FREKUENSI'];
+            sheet.mergeCells('C4:E4');
             
-            ['A5', 'B5', 'F5'].forEach(ref => {
+            ['A4', 'B4', 'C4', 'F4'].forEach(ref => {
                 const cell = sheet.getCell(ref);
                 cell.fill = headerFill;
                 cell.font = headerFont;
                 cell.alignment = centerAlignment;
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             });
 
-            // Add Sample Data (Row 6 onwards)
+            // Baris 5: Data Contoh
             const sampleData = [
-                [1, 'Pembersihan Lobby Utama', '', '', '', 'Setiap Hari'],
-                [2, 'Pengecekan Lift Penumpang', '', '', '', '1x Per Minggu'],
-                [3, 'Pemangkasan Rumput Halaman', '', '', '', '1x Per Bulan']
+                [1, 'Pembersihan dinding', '', '', '', '1x Per 2 Minggu'],
+                [2, 'Pembersihan dan perawatan lantai', '', '', '', '1x Per Minggu'],
+                [3, 'Pembersihan plafon', '', '', '', '1x Per Bulan']
             ];
             
             sampleData.forEach((data, i) => {
-                const row = sheet.getRow(6 + i);
+                const rowNum = 5 + i;
+                const row = sheet.getRow(rowNum);
                 row.values = data;
-                sheet.mergeCells(`B${6+i}:E${6+i}`);
+                sheet.mergeCells(`C${rowNum}:E${rowNum}`);
                 row.getCell(1).alignment = centerAlignment;
                 row.getCell(6).alignment = centerAlignment;
+                
+                // Add borders
+                ['A', 'B', 'C', 'D', 'E', 'F'].forEach(col => {
+                    row.getCell(col).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                });
+                row.height = 60; // Agar mirip screenshot yang ada foto
             });
 
-            sheet.getColumn(1).width = 5;
+            sheet.getColumn(1).width = 8;
             sheet.getColumn(2).width = 40;
+            sheet.getColumn(3).width = 15;
+            sheet.getColumn(4).width = 15;
+            sheet.getColumn(5).width = 15;
             sheet.getColumn(6).width = 20;
         };
 
-        createSheet('Gedung A', '001', 'Telkom Landmark Tower');
-        createSheet('Gedung B', '002', 'Telkom Slipi');
+        createSheet('KELAS 4 OFFICE', '(5445101601)-(STO NEGARA SINGARAJA)');
+        createSheet('KELAS 4 IDLE', '(5445101602)-(STO NEGARA SINGARAJA)');
 
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
