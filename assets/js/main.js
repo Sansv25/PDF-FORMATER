@@ -902,11 +902,12 @@ elements.btnGenerate.onclick = async () => {
                                     console.error('PDF Image Error', e);
                                 }
                             });
+                        }
                     }
                 }
             },
-                margin: { left: 10, right: 10 },
-                pageBreak: 'avoid'
+            margin: { left: 10, right: 10 },
+            pageBreak: 'avoid'
             });
 
             // Simpan setiap sheet sebagai file PDF terpisah
