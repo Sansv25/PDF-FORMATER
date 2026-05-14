@@ -218,17 +218,19 @@ async function handleExcelFile(file) {
                 }
 
                 sheet.eachRow((row, rowNumber) => {
-                    // Berdasarkan gambar, data dimulai dari baris 5
-                    if (rowNumber >= 5) {
+                    // Data dimulai dari baris 6 (baris 5 adalah header)
+                    if (rowNumber >= 6) {
                         const activityText = row.getCell(2).value;
-                        const volume = row.getCell(6).value; // Kolom F adalah Frekuensi di gambar
+                        const volume = row.getCell(6).value;
                         
-                        if (activityText && typeof activityText === 'string') {
+                        // Validasi: pastikan ada teks aktivitas dan bukan teks header
+                        if (activityText && typeof activityText === 'string' && 
+                            activityText.trim().toLowerCase() !== 'aktivitas pekerjaan') {
                             activities.push({
                                 row: rowNumber,
-                                text: activityText,
+                                text: activityText.trim(),
                                 volume: volume || '',
-                                satuan: '', // Di gambar sudah gabung di kolom F (misal: 1x Per Minggu)
+                                satuan: '',
                                 photos: []
                             });
                         }
@@ -277,51 +279,62 @@ elements.btnNext1.onclick = () => goToStep(2);
 elements.btnDownloadTemplate.onclick = async () => {
     try {
         const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Laporan');
-
-        // Styles
-        const headerFill = { type: 'pattern', pattern:'solid', fgColor: { argb: 'FFE31937' } };
-        const headerFont = { color: { argb: 'FFFFFFFF' }, bold: true };
-        const centerAlignment = { vertical: 'middle', horizontal: 'center' };
-
-        // Set Title
-        sheet.mergeCells('A1:F1');
-        const titleCell = sheet.getCell('A1');
-        titleCell.value = 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG';
-        titleCell.font = { size: 14, bold: true };
-        titleCell.alignment = centerAlignment;
-
-        // Set Headers Row 5
-        const headerRow = sheet.getRow(5);
-        headerRow.values = ['No', 'Aktivitas Pekerjaan', '', '', '', 'Frekuensi'];
-        sheet.mergeCells('B5:E5');
         
-        ['A5', 'B5', 'F5'].forEach(ref => {
-            const cell = sheet.getCell(ref);
-            cell.fill = headerFill;
-            cell.font = headerFont;
-            cell.alignment = centerAlignment;
-        });
+        const createSheet = (sheetName, gedungNo, gedungName) => {
+            const sheet = workbook.addWorksheet(sheetName);
+            const headerFill = { type: 'pattern', pattern:'solid', fgColor: { argb: 'FFE31937' } };
+            const headerFont = { color: { argb: 'FFFFFFFF' }, bold: true };
+            const centerAlignment = { vertical: 'middle', horizontal: 'center' };
 
-        // Add Sample Data
-        const sampleData = [
-            [1, 'Pembersihan Lobby Utama', '', '', '', 'Setiap Hari'],
-            [2, 'Pengecekan Lift Penumpang', '', '', '', '1x Per Minggu'],
-            [3, 'Pemangkasan Rumput Halaman', '', '', '', '1x Per Bulan']
-        ];
-        
-        sampleData.forEach((data, i) => {
-            const row = sheet.getRow(6 + i);
-            row.values = data;
-            sheet.mergeCells(`B${6+i}:E${6+i}`);
-            row.getCell(1).alignment = centerAlignment;
-            row.getCell(6).alignment = centerAlignment;
-        });
+            // Set Title
+            sheet.mergeCells('A1:F1');
+            const titleCell = sheet.getCell('A1');
+            titleCell.value = 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG';
+            titleCell.font = { size: 14, bold: true };
+            titleCell.alignment = centerAlignment;
 
-        // Set column widths
-        sheet.getColumn(1).width = 5;
-        sheet.getColumn(2).width = 40;
-        sheet.getColumn(6).width = 20;
+            // No Gedung & Nama Gedung (Row 3)
+            sheet.getCell('A3').value = 'No Gedung:';
+            sheet.getCell('B3').value = gedungNo;
+            sheet.getCell('D3').value = 'Nama Gedung:';
+            sheet.getCell('E3').value = gedungName;
+            sheet.getCell('A3').font = { bold: true };
+            sheet.getCell('D3').font = { bold: true };
+
+            // Set Headers Row 5
+            const headerRow = sheet.getRow(5);
+            headerRow.values = ['No', 'Aktivitas Pekerjaan', '', '', '', 'Frekuensi'];
+            sheet.mergeCells('B5:E5');
+            
+            ['A5', 'B5', 'F5'].forEach(ref => {
+                const cell = sheet.getCell(ref);
+                cell.fill = headerFill;
+                cell.font = headerFont;
+                cell.alignment = centerAlignment;
+            });
+
+            // Add Sample Data (Row 6 onwards)
+            const sampleData = [
+                [1, 'Pembersihan Lobby Utama', '', '', '', 'Setiap Hari'],
+                [2, 'Pengecekan Lift Penumpang', '', '', '', '1x Per Minggu'],
+                [3, 'Pemangkasan Rumput Halaman', '', '', '', '1x Per Bulan']
+            ];
+            
+            sampleData.forEach((data, i) => {
+                const row = sheet.getRow(6 + i);
+                row.values = data;
+                sheet.mergeCells(`B${6+i}:E${6+i}`);
+                row.getCell(1).alignment = centerAlignment;
+                row.getCell(6).alignment = centerAlignment;
+            });
+
+            sheet.getColumn(1).width = 5;
+            sheet.getColumn(2).width = 40;
+            sheet.getColumn(6).width = 20;
+        };
+
+        createSheet('Gedung A', '001', 'Telkom Landmark Tower');
+        createSheet('Gedung B', '002', 'Telkom Slipi');
 
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
