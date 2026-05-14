@@ -97,7 +97,16 @@ async function login(email, password) {
         // Update Session ID in Database upon login
         const newSessionId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('fb_session_id', newSessionId);
-        await database.ref('sessions/' + user.uid).set(newSessionId);
+        
+        try {
+            await database.ref('sessions/' + user.uid).set(newSessionId);
+        } catch (dbError) {
+            console.error('Database Error:', dbError);
+            return { 
+                success: false, 
+                message: 'Gagal sinkronisasi sesi. Pastikan "Firebase Rules" sudah diatur ke "auth != null".' 
+            };
+        }
         
         return { success: true };
     } catch (error) {
