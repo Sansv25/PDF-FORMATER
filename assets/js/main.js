@@ -803,7 +803,9 @@ elements.btnGenerate.onclick = async () => {
 
         for (let sIndex = 0; sIndex < state.sheets.length; sIndex++) {
             const sheet = state.sheets[sIndex];
-            if (sIndex > 0) doc.addPage();
+            
+            // Buat PDF Baru untuk setiap Sheet
+            const doc = new jsPDF('p', 'mm', 'a4');
 
             // 1. Header Sangat Ringkas (Condensed - 15mm)
             doc.setFillColor(...telkomRed);
@@ -819,12 +821,12 @@ elements.btnGenerate.onclick = async () => {
 
             // 2. Hitung Auto-Scaling agar MUAT SATU LEMBAR
             const startY = 18;
-            const endY = 287; // Beri sedikit margin di bawah
+            const endY = 287; 
             const availableHeight = endY - startY;
-            const totalRows = sheet.activities.length + 1; // +1 untuk header tabel
+            const totalRows = sheet.activities.length + 1; 
             const calculatedRowHeight = availableHeight / totalRows;
 
-            // 3. Pre-load Images
+            // 3. Pre-load Images untuk sheet ini
             const processedImages = new Map();
             for (const activity of sheet.activities) {
                 const selectedIndices = state.selectedPhotos[sheet.name]?.[activity.row] || [];
@@ -881,11 +883,9 @@ elements.btnGenerate.onclick = async () => {
                     if (data.section === 'body' && data.column.index === 3) {
                         const rowIndex = data.row.index;
                         const activity = sheet.activities[rowIndex];
+                        const images = processedImages.get(activity.row);
                         
-                        if (activity) {
-                            const images = processedImages.get(activity.row);
-                            
-                            if (images && images.length > 0) {
+                        if (images && images.length > 0) {
                             const padding = 0.5;
                             const imgCount = Math.min(images.length, 2);
                             const imgWidth = (data.cell.width - (padding * (imgCount + 1))) / imgCount;
@@ -902,28 +902,18 @@ elements.btnGenerate.onclick = async () => {
                             });
                         }
                     }
-                }
-            },
+                },
                 margin: { left: 10, right: 10 },
                 pageBreak: 'avoid'
             });
+
+            // Simpan setiap sheet sebagai file PDF terpisah
+            const cleanSheetName = sheet.name.replace(/[^a-z0-9]/gi, '_');
+            doc.save(`Laporan_${cleanSheetName}_${new Date().getTime()}.pdf`);
         }
 
-        const filename = `Laporan_Final_OnePage_${new Date().getTime()}.pdf`;
-        doc.save(filename);
-        
-        elements.finalFilename.innerText = filename;
         goToStep(6);
-        
-        if (window.authApp && window.authApp.logActivity) {
-            window.authApp.logActivity('GENERATE_PDF_ONE_PAGE', { 
-                filename: filename,
-                sheetsCount: state.sheets.length,
-                totalActivities: state.sheets.reduce((acc, s) => acc + s.activities.length, 0)
-            });
-        }
-
-        showToast('PDF berhasil didownload!', 'success');
+        showToast(`Berhasil mengekspor ${state.sheets.length} file PDF!`, 'success');
         hideLoading();
     } catch (err) {
         console.error('PDF Generation Error:', err);
