@@ -19,5 +19,3 @@ npm-debug.log
 
 # Secrets & Config
 .env
-assets/js/firebase-config.js
-
