@@ -80,15 +80,17 @@
 
     <!-- Step 1: Upload Excel -->
     <div class="step-content active" id="step-1">
-        <h2 class="mb-2">Upload File Excel</h2>
-        <p class="subtitle mb-4">Upload file laporan pengelolaan gedung (.xlsx) Anda.</p>
-        
-        <div class="flex items-center gap-2 mb-4">
-            <input type="file" id="excel-input">
-            <button class="btn btn-secondary" id="btn-download-template" style="height: 44px; white-space: nowrap;">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="mb-2">Upload File Excel</h2>
+                <p class="subtitle">Upload file laporan pengelolaan gedung (.xlsx) Anda.</p>
+            </div>
+            <button class="btn btn-secondary" id="btn-download-template">
                 <span class="material-icons-round">download</span> Template
             </button>
         </div>
+        
+        <input type="file" id="excel-input">
         
         <div id="excel-info" class="mt-4 hidden">
             <div class="folder-card">
