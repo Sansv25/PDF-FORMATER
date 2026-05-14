@@ -25,50 +25,16 @@ function initAuth() {
         database = firebase.database();
 
         // Monitor Auth State
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged((user) => {
             const isLoginPage = window.location.pathname.includes('login.html');
             
             if (user) {
-                const currentSessionId = getSessionId();
-                const sessionRef = database.ref('sessions/' + user.uid);
-                
-                try {
-                    // Get current active session from DB
-                    const snapshot = await sessionRef.get();
-                    const activeSessionId = snapshot.val();
-
-                    if (!activeSessionId || activeSessionId !== currentSessionId) {
-                        console.log('Security: Syncing session ID to DB...');
-                        await sessionRef.set(currentSessionId);
-                        logActivity('SESSION_CLAIMED', { info: 'Syncing/Claiming session' });
-                    }
-
-                    // Jika berhasil sinkron dan di halaman login, baru ke index
-                    if (isLoginPage) {
-                        window.location.href = 'index.html';
-                    }
-                } catch (err) {
-                    console.error('Security: Session sync failed!', err);
-                    // JANGAN pindah ke index jika gagal sinkron (mencegah loop)
-                    if (!isLoginPage) {
-                        alert('Gagal sinkronisasi sesi. Periksa Firebase Rules Anda.');
-                        window.location.href = 'login.html';
-                    }
-                    return;
+                // Jika di halaman login, pindah ke index
+                if (isLoginPage) {
+                    window.location.href = 'index.html';
                 }
-
-                // Listen for FUTURE session changes
-                sessionRef.on('value', (snapshot) => {
-                    const latestSessionId = snapshot.val();
-                    if (latestSessionId && latestSessionId !== currentSessionId) {
-                        alert('Akun Anda telah login di perangkat lain. Anda akan dikeluarkan.');
-                        logout();
-                    }
-                });
-
                 updateUIForUser(user);
             } else {
-                console.log('User is logged out');
                 if (!isLoginPage) {
                     window.location.href = 'login.html';
                 }
@@ -103,22 +69,6 @@ async function login(email, password) {
 
     try {
         const result = await auth.signInWithEmailAndPassword(email, password);
-        const user = result.user;
-        
-        // Update Session ID in Database upon login
-        const newSessionId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('fb_session_id', newSessionId);
-        
-        try {
-            await database.ref('sessions/' + user.uid).set(newSessionId);
-        } catch (dbError) {
-            console.error('Database Error:', dbError);
-            return { 
-                success: false, 
-                message: 'Gagal sinkronisasi sesi. Pastikan "Firebase Rules" sudah diatur ke "auth != null".' 
-            };
-        }
-        
         return { success: true };
     } catch (error) {
         console.error('Login Error:', error);
