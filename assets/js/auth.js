@@ -137,6 +137,38 @@ async function logActivity(type, details = {}) {
     }
 }
 
+/**
+ * CHECK SESSION STATUS
+ * Dipanggil setiap kali pindah step untuk memastikan user masih valid
+ */
+async function checkSession() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Paksa refresh token untuk cek apakah akun masih aktif (tidak di-disable/hapus)
+        await user.getIdToken(true);
+
+        // Cek apakah sesi di DB masih milik kita
+        const sessionRef = database.ref('sessions/' + user.uid);
+        const snapshot = await sessionRef.get();
+        const latestSessionId = snapshot.val();
+        
+        if (latestSessionId && latestSessionId !== localStorage.getItem('fb_session_id')) {
+            return false; // Ada perangkat lain masuk
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Session Check Error:', error);
+        window.location.href = 'login.html';
+        return false;
+    }
+}
+
 // Update UI (Profile Dropdown, etc.)
 function updateUIForUser(user) {
     const profileContainer = document.getElementById('user-profile');
@@ -172,5 +204,6 @@ document.addEventListener('DOMContentLoaded', initAuth);
 window.authApp = {
     login,
     logout,
-    logActivity
+    logActivity,
+    checkSession
 };
