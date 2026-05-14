@@ -210,46 +210,60 @@ async function handleExcelFile(file) {
             console.log('ExcelJS: Loading workbook buffer...');
             await workbook.xlsx.load(buffer);
             state.workbook = workbook;
-            console.log('ExcelJS: Workbook loaded successfully');
-            
             const sheets = [];
             workbook.eachSheet(sheet => {
                 console.log(`Processing sheet: ${sheet.name}`);
                 const activities = [];
-                let title = '';
-                let subtitle = '';
+                let title = sheet.getRow(1).getCell(1).value || '';
+                let subtitle = sheet.getRow(2).getCell(1).value || '';
                 
-                // Ambil Judul dari Baris 1
-                const row1 = sheet.getRow(1);
-                if (row1) {
-                    title = row1.getCell(1).value || '';
-                }
+                let headerFound = false;
+                let headerRowNumber = 4; // Default as per template
 
-                // Ambil Identitas Gedung dari Baris 2
-                const row2 = sheet.getRow(2);
-                if (row2) {
-                    subtitle = row2.getCell(1).value || '';
-                }
-
+                // Cari baris header secara dinamis jika tidak di baris 4
                 sheet.eachRow((row, rowNumber) => {
-                    // Data dimulai dari baris 5 (baris 4 adalah header)
-                    if (rowNumber >= 5) {
+                    if (headerFound) {
                         const activityText = row.getCell(2).value;
                         const volume = row.getCell(6).value;
-                        
-                        // Validasi: pastikan ada teks aktivitas dan bukan teks header
-                        if (activityText && typeof activityText === 'string' && 
-                            !['aktvitas pekerjaan', 'aktifitas pekerjaan'].includes(activityText.trim().toLowerCase())) {
+
+                        if (activityText && activityText.toString().trim().length > 0) {
                             activities.push({
                                 row: rowNumber,
-                                text: activityText.trim(),
+                                text: activityText.toString().trim(),
                                 volume: volume || '',
                                 satuan: '',
                                 photos: []
                             });
                         }
+                    } else {
+                        // Cek apakah ini baris header
+                        const cell2 = (row.getCell(2).value || '').toString().toLowerCase();
+                        if (cell2.includes('aktivitas') || cell2.includes('aktifitas')) {
+                            headerFound = true;
+                            headerRowNumber = rowNumber;
+                            console.log(`- Header found at row ${rowNumber}`);
+                        }
                     }
                 });
+
+                // Jika header tidak ditemukan secara dinamis, coba tebak mulai dari baris 2
+                if (!headerFound) {
+                    console.log('- Header not found, falling back to Row 2+');
+                    sheet.eachRow((row, rowNumber) => {
+                        if (rowNumber >= 2) {
+                            const actText = row.getCell(2).value;
+                            if (actText && actText.toString().trim().length > 2) {
+                                activities.push({
+                                    row: rowNumber,
+                                    text: actText.toString().trim(),
+                                    volume: row.getCell(6).value || '',
+                                    satuan: '',
+                                    photos: []
+                                });
+                            }
+                        }
+                    });
+                }
                 
                 if (activities.length > 0) {
                     sheets.push({
@@ -258,12 +272,13 @@ async function handleExcelFile(file) {
                         subtitle: subtitle,
                         activities: activities
                     });
-                    console.log(`- Found ${activities.length} activities`);
+                    console.log(`- Successfully extracted ${activities.length} rows`);
                 }
             });
 
             if (sheets.length === 0) {
-                showToast('Tidak ditemukan daftar aktivitas di file ini.', 'error');
+                console.warn('Excel Parsing: No activities found in any sheet.');
+                showToast('Maaf, tidak ditemukan data aktivitas di kolom B. Pastikan file Excel benar.', 'error');
                 excelPond.removeFile();
                 hideLoading();
                 return;
