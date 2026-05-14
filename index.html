@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Photo Inserter — Telkom Gedung Management</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- FilePond CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/filepond@4.30.4/dist/filepond.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/filepond-plugin-image-preview@4.6.11/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text">Sedang memproses...</p>
+</div>
+
+<div id="hover-preview" class="hover-preview">
+    <img id="hover-preview-img" src="" alt="Preview">
+</div>
+
+<div class="user-profile-container" id="user-profile">
+    <!-- Will be populated by auth.js -->
+</div>
+
+<div class="app-container">
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">
+                <span class="material-icons-round">picture_as_pdf</span>
+            </div>
+            <h1>Excel to PDF Report</h1>
+        </div>
+        <p class="subtitle">Laporan Pengelolaan Gedung Telkom</p>
+    </header>
+
+    <div class="stepper" id="stepper">
+        <div class="step active" data-step="1">
+            <div class="step-icon">1</div>
+            <div class="step-label">Excel</div>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-icon">2</div>
+            <div class="step-label">Gambar</div>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-icon">3</div>
+            <div class="step-label">Mapping</div>
+        </div>
+        <div class="step" data-step="4">
+            <div class="step-icon">4</div>
+            <div class="step-label">Pilih Foto</div>
+        </div>
+        <div class="step" data-step="5">
+            <div class="step-icon">5</div>
+            <div class="step-label">Preview</div>
+        </div>
+        <div class="step" data-step="6">
+            <div class="step-icon">6</div>
+            <div class="step-label">Selesai</div>
+        </div>
+    </div>
+
+    <!-- Step 1: Upload Excel -->
+    <div class="step-content active" id="step-1">
+        <h2 class="mb-2">Upload File Excel</h2>
+        <p class="subtitle mb-4">Upload file laporan pengelolaan gedung (.xlsx) Anda.</p>
+        
+        <input type="file" id="excel-input">
+        
+        <div id="excel-info" class="mt-4 hidden">
+            <div class="folder-card">
+                <div class="folder-header">
+                    <span class="material-icons-round" style="color: #217346;">table_view</span>
+                    <div class="folder-name" id="excel-filename">nama_file.xlsx</div>
+                </div>
+                <div class="folder-info" id="excel-details">
+                    3 Sheet ditemukan • 120 Aktivitas
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <div></div>
+            <button class="btn btn-primary" id="btn-next-1" disabled>
+                Lanjut ke Gambar <span class="material-icons-round">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 2: Upload Images -->
+    <div class="step-content" id="step-2">
+        <h2 class="mb-2">Upload Folder Gambar</h2>
+        <p class="subtitle mb-4">Upload folder gambar atau file ZIP yang berisi foto. Gambar akan dikompres otomatis.</p>
+        
+        <input type="file" id="image-input" multiple webkitdirectory>
+
+        <div class="folder-grid" id="folder-list">
+            <!-- Folders will be listed here -->
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="btn-prev-2">
+                <span class="material-icons-round">arrow_back</span> Kembali
+            </button>
+            <button class="btn btn-primary" id="btn-next-2" disabled>
+                Lanjut ke Mapping <span class="material-icons-round">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Mapping -->
+    <div class="step-content" id="step-3">
+        <h2 class="mb-2">Petakan Sheet ke Folder</h2>
+        <p class="subtitle mb-2">Pilih folder gambar yang sesuai untuk setiap sheet di Excel.</p>
+        
+        <table class="mapping-table">
+            <thead>
+                <tr>
+                    <th>Sheet (Excel)</th>
+                    <th width="50"></th>
+                    <th>Folder Gambar</th>
+                </tr>
+            </thead>
+            <tbody id="mapping-body">
+                <!-- Mapping rows will be generated here -->
+            </tbody>
+        </table>
+
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="btn-prev-3">
+                <span class="material-icons-round">arrow_back</span> Kembali
+            </button>
+            <button class="btn btn-primary" id="btn-next-3" disabled>
+                Lanjut Pilih Foto <span class="material-icons-round">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 4: Photo Selection -->
+    <div class="step-content" id="step-4">
+        <div class="activity-header">
+            <div>
+                <h2 class="mb-2">Pilih Foto per Aktivitas</h2>
+                <p class="subtitle">Klik foto untuk memasukkannya ke dalam baris aktivitas.</p>
+            </div>
+            <div id="overall-progress" class="badge-count">0 / 0 Aktivitas Terisi</div>
+        </div>
+        
+        <div class="tabs" id="sheet-tabs">
+            <!-- Tabs generated here -->
+        </div>
+
+        <div id="activity-container">
+            <!-- Activities generated here -->
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="btn-prev-4">
+                <span class="material-icons-round">arrow_back</span> Kembali
+            </button>
+            <button class="btn btn-primary" id="btn-next-4">
+                Lanjut ke Preview <span class="material-icons-round">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 5: Preview -->
+    <div class="step-content" id="step-5">
+        <h2 class="mb-2">Pratinjau Hasil</h2>
+        <p class="subtitle mb-2">Periksa kembali penempatan foto sebelum mendownload file PDF.</p>
+        
+        <div class="tabs" id="preview-tabs">
+            <!-- Tabs generated here -->
+        </div>
+
+        <div id="preview-container" style="max-height: 600px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 8px;">
+            <!-- Preview list generated here -->
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="btn-prev-5">
+                <span class="material-icons-round">arrow_back</span> Edit Pilihan
+            </button>
+            <button class="btn btn-primary" id="btn-generate">
+                <span class="material-icons-round">picture_as_pdf</span> Download PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 6: Success -->
+    <div class="step-content" id="step-6">
+        <div class="text-center" style="padding-top: 3rem;">
+            <div class="material-icons-round" style="font-size: 80px; color: #10B981; margin-bottom: 1.5rem;">check_circle</div>
+            <h2 class="mb-2">Berhasil Dibuat!</h2>
+            <p class="subtitle mb-4">Laporan PDF Anda telah berhasil diproses dan didownload.</p>
+            
+            <div class="folder-card" style="max-width: 400px; margin: 0 auto; text-align: left;">
+                <div class="folder-header">
+                    <span class="material-icons-round" style="color: #E31937;">picture_as_pdf</span>
+                    <div class="folder-name" id="final-filename">hasil_laporan.pdf</div>
+                </div>
+                <div class="folder-info">
+                    Tersimpan di folder Downloads Anda.
+                </div>
+            </div>
+
+            <button class="btn btn-secondary mt-4" onclick="location.reload()">
+                <span class="material-icons-round">refresh</span> Mulai Baru
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- PDF Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<!-- FilePond JS -->
+<script src="https://cdn.jsdelivr.net/npm/filepond-plugin-file-validate-type@1.2.8/dist/filepond-plugin-file-validate-type.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/filepond-plugin-image-preview@4.6.11/dist/filepond-plugin-image-preview.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/filepond@4.30.4/dist/filepond.min.js"></script>
+
+<!-- Image Compression Library -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+
+<!-- Custom JS -->
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/compression.js"></script>
+<script src="assets/js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,638 @@
+:root {
+    --telkom-red: #E31937;
+    --telkom-red-dark: #C1152F;
+    --telkom-red-light: #FFEBEE;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 12px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Layout */
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.logo-icon {
+    background-color: var(--telkom-red);
+    color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: var(--shadow-md);
+}
+
+h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.025em;
+}
+
+p.subtitle {
+    color: var(--gray-500);
+    font-size: 1rem;
+}
+
+/* Progress Stepper */
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    position: relative;
+    padding: 0 1rem;
+}
+
+.stepper::before {
+    content: '';
+    position: absolute;
+    top: 1.25rem;
+    left: 2rem;
+    right: 2rem;
+    height: 2px;
+    background-color: var(--gray-200);
+    z-index: 1;
+}
+
+.step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.step-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: white;
+    border: 2px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--gray-500);
+    transition: var(--transition);
+}
+
+.step.active .step-icon {
+    border-color: var(--telkom-red);
+    background-color: var(--telkom-red);
+    color: white;
+    box-shadow: 0 0 0 4px var(--telkom-red-light);
+}
+
+.step.completed .step-icon {
+    border-color: var(--telkom-red);
+    background-color: var(--telkom-red);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: var(--transition);
+}
+
+.step.active .step-label {
+    color: var(--telkom-red);
+}
+
+/* Card Container */
+.step-content {
+    background-color: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 2.5rem;
+    min-height: 400px;
+    display: none;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.step-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Buttons */
+.btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    font-size: 0.9375rem;
+}
+
+.btn-primary {
+    background-color: var(--telkom-red);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--telkom-red-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+    background-color: var(--gray-300);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background-color: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background-color: var(--gray-200);
+}
+
+/* Upload Zone Override for FilePond */
+.filepond--root {
+    margin-bottom: 0;
+    font-family: inherit;
+}
+
+.filepond--panel-root {
+    background-color: var(--gray-50);
+    border: 2px dashed var(--gray-300);
+}
+
+.filepond--drop-label {
+    color: var(--gray-600);
+}
+
+/* Folder Cards */
+.folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.folder-card {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    background-color: white;
+    transition: var(--transition);
+}
+
+.folder-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--telkom-red);
+}
+
+.folder-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.folder-icon {
+    color: #FFB300;
+    font-size: 24px;
+}
+
+.folder-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.folder-info {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.folder-previews {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.preview-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    object-fit: cover;
+    background-color: var(--gray-100);
+}
+
+/* Mapping Table */
+.mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.mapping-table th {
+    text-align: left;
+    padding: 1rem;
+    background-color: var(--gray-100);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mapping-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+select.mapping-select {
+    width: 100%;
+    padding: 0.625rem;
+    border-radius: 6px;
+    border: 1px solid var(--gray-300);
+    background-color: white;
+    font-family: inherit;
+    outline: none;
+    transition: var(--transition);
+}
+
+select.mapping-select:focus {
+    border-color: var(--telkom-red);
+    box-shadow: 0 0 0 3px var(--telkom-red-light);
+}
+
+/* Activity Grid */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+    overflow-x: auto;
+    padding-bottom: 1px;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--gray-500);
+    white-space: nowrap;
+    transition: var(--transition);
+    border-bottom: 3px solid transparent;
+}
+
+.tab:hover {
+    color: var(--telkom-red);
+}
+
+.tab.active {
+    color: var(--telkom-red);
+    border-bottom-color: var(--telkom-red);
+}
+
+.activity-item {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background-color: var(--gray-50);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 1.0625rem;
+}
+
+.activity-meta {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+
+.photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    border: 3px solid transparent;
+    transition: var(--transition);
+    background-color: var(--gray-200);
+}
+
+.photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-thumb.selected {
+    border-color: var(--telkom-red);
+    box-shadow: var(--shadow-md);
+}
+
+.photo-thumb.selected::after {
+    content: 'check_circle';
+    font-family: 'Material Icons Round';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: var(--telkom-red);
+    background: white;
+    border-radius: 50%;
+    font-size: 20px;
+}
+
+.badge-count {
+    background-color: var(--telkom-red);
+    color: white;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Preview styles */
+.preview-row {
+    display: flex;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 1rem 0;
+}
+
+.preview-activity {
+    flex: 1;
+    padding-right: 1rem;
+}
+
+.preview-col {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    background-color: #fcfcfc;
+    border: 1px solid #eee;
+    padding: 0.5rem;
+    min-height: 80px;
+}
+
+.preview-img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.no-photo {
+    color: var(--gray-400);
+    font-style: italic;
+    font-size: 0.8125rem;
+}
+
+/* Image Hover Preview */
+.hover-preview {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    display: none;
+    background: white;
+    padding: 5px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 2px solid var(--telkom-red);
+    max-width: 400px;
+    max-height: 400px;
+    overflow: hidden;
+    animation: previewFadeIn 0.2s ease-out;
+}
+
+.hover-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+@keyframes previewFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Toast */
+#toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+}
+
+.toast {
+    background-color: var(--gray-900);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--gray-200);
+    border-top: 4px solid var(--telkom-red);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Utility */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+.mt-4 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+
+/* User Profile & Dropdown */
+.user-profile-container {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 100;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--gray-200);
+}
+
+.user-info:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--telkom-red);
+}
+
+.user-avatar {
+    color: var(--telkom-red);
+    display: flex;
+    align-items: center;
+}
+
+.user-email {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    min-width: 160px;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.dropdown-item:hover {
+    background-color: var(--gray-50);
+    color: var(--telkom-red);
+}
+
+.dropdown-item .material-icons-round {
+    font-size: 20px;
+}
+

@@ -1,0 +1,22 @@
+{
+  "name": "excel-photo-inserter",
+  "version": "1.0.0",
+  "description": "Aplikasi web untuk memasukkan foto pekerjaan ke dalam laporan Excel **Pengelolaan Gedung Telkom** secara otomatis. Berjalan 100% di browser, tanpa backend, tanpa install.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browser-image-compression": "^2.0.2",
+    "filepond": "^4.32.12",
+    "filepond-plugin-file-validate-type": "^1.2.9",
+    "filepond-plugin-image-preview": "^4.6.12",
+    "sweetalert2": "^11.26.24"
+  }
+}
