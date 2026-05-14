@@ -866,9 +866,11 @@ elements.btnGenerate.onclick = async () => {
                     if (data.section === 'body' && data.column.index === 3) {
                         const rowIndex = data.row.index;
                         const activity = sheet.activities[rowIndex];
-                        const images = processedImages.get(activity.row);
                         
-                        if (images && images.length > 0) {
+                        if (activity) {
+                            const images = processedImages.get(activity.row);
+                            
+                            if (images && images.length > 0) {
                             const padding = 0.5;
                             const imgCount = Math.min(images.length, 2);
                             const imgWidth = (data.cell.width - (padding * (imgCount + 1))) / imgCount;
