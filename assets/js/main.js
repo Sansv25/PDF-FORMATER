@@ -161,15 +161,8 @@ function hideLoading() {
     elements.loading.style.display = 'none';
 }
 
-async function goToStep(step) {
+function goToStep(step) {
     console.log(`Moving to Step ${step}`);
-    
-    // Keamanan: Cek apakah sesi masih valid sebelum lanjut
-    if (window.authApp && window.authApp.checkSession) {
-        const isValid = await window.authApp.checkSession();
-        if (!isValid) return; // auth.js akan menangani redirect
-    }
-
     state.currentStep = step;
     elements.steps.forEach(s => {
         const sNum = parseInt(s.dataset.step);
