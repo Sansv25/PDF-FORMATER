@@ -766,24 +766,17 @@ elements.btnPrev5.onclick = () => goToStep(4);
  * STEP 6: GENERATE PDF
  */
 elements.btnGenerate.onclick = async () => {
-    if (Object.keys(state.selectedPhotos).length === 0) {
-        const confirm = await Swal.fire({
-            title: 'Tidak ada foto?',
-            text: 'Anda belum memilih foto untuk aktivitas apa pun. Lanjutkan download PDF?',
-            icon: 'question',
-            showCancelButton: true
-        });
-        if (!confirm.isConfirmed) return;
-    }
+    if (state.sheets.length === 0) return;
 
-    showLoading('Menyusun laporan PDF... Mohon tunggu sebentar (Sedang memproses gambar).');
+    showLoading('Menyusun laporan PDF... Sedang memproses gambar agar muat satu lembar per sheet.');
     
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const telkomRed = [227, 25, 55]; // #E31937
+        const telkomRed = [227, 25, 55];
+        const pageWidth = 210;
+        const pageHeight = 297;
 
-        // Helper to convert Blob to DataURL
         const blobToDataURL = (blob) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -793,15 +786,31 @@ elements.btnGenerate.onclick = async () => {
             });
         };
 
-        let firstSheet = true;
+        for (let sIndex = 0; sIndex < state.sheets.length; sIndex++) {
+            const sheet = state.sheets[sIndex];
+            if (sIndex > 0) doc.addPage();
 
-        for (const sheet of state.sheets) {
-            if (!firstSheet) doc.addPage();
-            firstSheet = false;
-
-            // Pre-load all images for this sheet
-            const processedImages = new Map(); // activityRow -> dataUrls[]
+            // 1. Header Sangat Ringkas (Condensed - 15mm)
+            doc.setFillColor(...telkomRed);
+            doc.rect(0, 0, pageWidth, 15, 'F');
             
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(sheet.title || 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG', 10, 6);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(sheet.subtitle || '', 10, 11);
+
+            // 2. Hitung Auto-Scaling agar MUAT SATU LEMBAR
+            const startY = 18;
+            const endY = 287; // Beri sedikit margin di bawah
+            const availableHeight = endY - startY;
+            const totalRows = sheet.activities.length + 1; // +1 untuk header tabel
+            const calculatedRowHeight = availableHeight / totalRows;
+
+            // 3. Pre-load Images
+            const processedImages = new Map();
             for (const activity of sheet.activities) {
                 const selectedIndices = state.selectedPhotos[sheet.name]?.[activity.row] || [];
                 const folderId = state.mapping[sheet.name];
@@ -818,102 +827,86 @@ elements.btnGenerate.onclick = async () => {
                 }
             }
 
-            // Header
-            doc.setFillColor(...telkomRed);
-            doc.rect(0, 0, 210, 40, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            const titleText = sheet.title || 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG';
-            doc.text(titleText.toUpperCase(), 15, 18, { maxWidth: 180 });
-            
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'normal');
-            if (sheet.subtitle) {
-                doc.text(sheet.subtitle.toUpperCase(), 15, 28);
-            }
-
-
-            // Table Data
-            const tableRows = sheet.activities.map((activity, index) => [
-                index + 1,
-                activity.text,
-                activity.volume,
-                '' // Photo Placeholder
+            // 4. Render Tabel
+            const tableRows = sheet.activities.map((act, i) => [
+                i + 1,
+                act.text,
+                act.volume,
+                '' // Photo
             ]);
 
             doc.autoTable({
-                startY: 45,
-                head: [['No', 'Aktivitas Pekerjaan', 'Frekuensi', 'Dokumentasi Foto']],
+                startY: startY,
+                head: [['NO', 'AKTIFITAS PEKERJAAN', 'FREKUENSI', 'FOTO PEKERJAAN']],
                 body: tableRows,
-                headStyles: { fillColor: telkomRed, halign: 'center', textColor: [255, 255, 255] },
+                theme: 'grid',
+                styles: {
+                    fontSize: 7,
+                    cellPadding: 0.5,
+                    minCellHeight: calculatedRowHeight,
+                    valign: 'middle',
+                    overflow: 'linebreak',
+                    lineWidth: 0.1,
+                    lineColor: [0, 0, 0]
+                },
+                headStyles: { 
+                    fillColor: telkomRed, 
+                    textColor: [255, 255, 255], 
+                    fontSize: 8,
+                    minCellHeight: calculatedRowHeight,
+                    halign: 'center'
+                },
                 columnStyles: {
                     0: { cellWidth: 10, halign: 'center' },
-                    1: { cellWidth: 60 },
-                    2: { cellWidth: 30, halign: 'center' },
-                    3: { cellWidth: 'auto', minCellHeight: 40 }
+                    1: { cellWidth: 75 },
+                    2: { cellWidth: 25, halign: 'center' },
+                    3: { cellWidth: 'auto' }
                 },
-                styles: { fontSize: 9, cellPadding: 3, valign: 'middle', overflow: 'linebreak' },
                 didDrawCell: (data) => {
                     if (data.section === 'body' && data.column.index === 3) {
-                        // Ambil index baris dari data.row.index
                         const rowIndex = data.row.index;
                         const activity = sheet.activities[rowIndex];
+                        const images = processedImages.get(activity.row);
                         
-                        if (activity) {
-                            const images = processedImages.get(activity.row);
-                            
-                            if (images && images.length > 0) {
-                                const padding = 2;
-                                const cellX = data.cell.x + padding;
-                                const cellY = data.cell.y + padding;
-                                const cellW = data.cell.width - (padding * 2);
-                                const cellH = data.cell.height - (padding * 2);
+                        if (images && images.length > 0) {
+                            const padding = 0.5;
+                            const imgCount = Math.min(images.length, 2);
+                            const imgWidth = (data.cell.width - (padding * (imgCount + 1))) / imgCount;
+                            const imgHeight = data.cell.height - (padding * 2);
 
-                                const count = images.length;
-                                const cols = count > 1 ? 2 : 1;
-                                const rows = Math.ceil(count / cols);
-                                
-                                const imgW = (cellW / cols) - (padding / 2);
-                                const imgH = (cellH / rows) - (padding / 2);
-
-                                images.forEach((imgUrl, i) => {
-                                    const r = Math.floor(i / cols);
-                                    const c = i % cols;
-                                    const x = cellX + (c * (imgW + padding/2));
-                                    const y = cellY + (r * (imgH + padding/2));
-                                    // Deteksi format otomatis (hapus 'JPEG')
-                                    doc.addImage(imgUrl, undefined, x, y, imgW, imgH);
-                                });
-                            }
+                            images.slice(0, 2).forEach((imgUrl, i) => {
+                                const x = data.cell.x + padding + (i * (imgWidth + padding));
+                                const y = data.cell.y + padding;
+                                try {
+                                    doc.addImage(imgUrl, 'JPEG', x, y, imgWidth, imgHeight);
+                                } catch (e) {
+                                    console.error('PDF Image Error', e);
+                                }
+                            });
                         }
                     }
                 },
-                margin: { top: 45, left: 15, right: 15 },
-                theme: 'grid',
-                tableWidth: 'auto'
+                margin: { left: 10, right: 10 },
+                pageBreak: 'avoid'
             });
         }
 
-        const filename = `Laporan_Gedung_${new Date().getTime()}.pdf`;
+        const filename = `Laporan_Final_OnePage_${new Date().getTime()}.pdf`;
         doc.save(filename);
         
         elements.finalFilename.innerText = filename;
         goToStep(6);
         
-        // Log activity
         if (window.authApp && window.authApp.logActivity) {
-            window.authApp.logActivity('GENERATE_PDF', { 
+            window.authApp.logActivity('GENERATE_PDF_ONE_PAGE', { 
                 filename: filename,
                 sheetsCount: state.sheets.length,
                 totalActivities: state.sheets.reduce((acc, s) => acc + s.activities.length, 0)
             });
         }
 
-        showToast('PDF berhasil didownload', 'success');
+        showToast('PDF berhasil didownload!', 'success');
         hideLoading();
-
     } catch (err) {
         console.error('PDF Generation Error:', err);
         showToast('Gagal membuat PDF: ' + err.message, 'error');
