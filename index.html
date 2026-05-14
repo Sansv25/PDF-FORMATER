@@ -83,7 +83,12 @@
         <h2 class="mb-2">Upload File Excel</h2>
         <p class="subtitle mb-4">Upload file laporan pengelolaan gedung (.xlsx) Anda.</p>
         
-        <input type="file" id="excel-input">
+        <div class="flex items-center gap-2 mb-4">
+            <input type="file" id="excel-input">
+            <button class="btn btn-secondary" id="btn-download-template" style="height: 44px; white-space: nowrap;">
+                <span class="material-icons-round">download</span> Template
+            </button>
+        </div>
         
         <div id="excel-info" class="mt-4 hidden">
             <div class="folder-card">
@@ -230,6 +235,9 @@
 </div>
 
 <div id="toast-container"></div>
+
+<!-- Hidden inputs for custom photo -->
+<input type="file" id="custom-photo-input" accept="image/*" style="display: none;">
 
 <!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>

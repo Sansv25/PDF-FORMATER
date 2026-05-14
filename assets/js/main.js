@@ -20,7 +20,8 @@ const state = {
     mapping: {}, // sheetName -> folderId
     selectedPhotos: {}, // sheetName -> activityRow -> [imageIndex, ...]
     imagesClearedConfirmed: false,
-    pdfDoc: null
+    pdfDoc: null,
+    customPhotoContext: null // { sheetName, row }
 };
 
 /**
@@ -68,6 +69,9 @@ const elements = {
     finalFilename: document.getElementById('final-filename'),
     hoverPreview: document.getElementById('hover-preview'),
     hoverPreviewImg: document.getElementById('hover-preview-img'),
+    
+    btnDownloadTemplate: document.getElementById('btn-download-template'),
+    customPhotoInput: document.getElementById('custom-photo-input'),
 };
 
 /**
@@ -268,6 +272,73 @@ async function handleExcelFile(file) {
 elements.btnNext1.onclick = () => goToStep(2);
 
 /**
+ * DOWNLOAD TEMPLATE
+ */
+elements.btnDownloadTemplate.onclick = async () => {
+    try {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Laporan');
+
+        // Styles
+        const headerFill = { type: 'pattern', pattern:'solid', fgColor: { argb: 'FFE31937' } };
+        const headerFont = { color: { argb: 'FFFFFFFF' }, bold: true };
+        const centerAlignment = { vertical: 'middle', horizontal: 'center' };
+
+        // Set Title
+        sheet.mergeCells('A1:F1');
+        const titleCell = sheet.getCell('A1');
+        titleCell.value = 'LAPORAN KEGIATAN PENGELOLAAN GEDUNG';
+        titleCell.font = { size: 14, bold: true };
+        titleCell.alignment = centerAlignment;
+
+        // Set Headers Row 5
+        const headerRow = sheet.getRow(5);
+        headerRow.values = ['No', 'Aktivitas Pekerjaan', '', '', '', 'Frekuensi'];
+        sheet.mergeCells('B5:E5');
+        
+        ['A5', 'B5', 'F5'].forEach(ref => {
+            const cell = sheet.getCell(ref);
+            cell.fill = headerFill;
+            cell.font = headerFont;
+            cell.alignment = centerAlignment;
+        });
+
+        // Add Sample Data
+        const sampleData = [
+            [1, 'Pembersihan Lobby Utama', '', '', '', 'Setiap Hari'],
+            [2, 'Pengecekan Lift Penumpang', '', '', '', '1x Per Minggu'],
+            [3, 'Pemangkasan Rumput Halaman', '', '', '', '1x Per Bulan']
+        ];
+        
+        sampleData.forEach((data, i) => {
+            const row = sheet.getRow(6 + i);
+            row.values = data;
+            sheet.mergeCells(`B${6+i}:E${6+i}`);
+            row.getCell(1).alignment = centerAlignment;
+            row.getCell(6).alignment = centerAlignment;
+        });
+
+        // Set column widths
+        sheet.getColumn(1).width = 5;
+        sheet.getColumn(2).width = 40;
+        sheet.getColumn(6).width = 20;
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Template_Laporan_Gedung.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showToast('Template berhasil didownload', 'success');
+    } catch (err) {
+        console.error(err);
+        showToast('Gagal membuat template', 'error');
+    }
+};
+
+/**
  * STEP 2: IMAGE UPLOAD
  */
 async function handleImageUpload(file) {
@@ -462,6 +533,9 @@ function renderActivities() {
                 <div class="activity-title">${activity.text}</div>
                 <div class="activity-meta">
                     <span class="badge-count">${selectedIndices.length} foto</span>
+                    <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="triggerCustomPhoto('${sheet.name}', ${activity.row})">
+                        <span class="material-icons-round" style="font-size: 14px;">add_a_photo</span> Tambah Foto
+                    </button>
                     <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="clearPhotos('${sheet.name}', ${activity.row})">Reset</button>
                 </div>
             </div>
@@ -490,6 +564,60 @@ window.clearPhotos = (sheetName, row) => {
         state.selectedPhotos[sheetName][row] = [];
     }
     renderActivities();
+};
+
+/**
+ * CUSTOM PHOTO HANDLING
+ */
+window.triggerCustomPhoto = (sheetName, row) => {
+    state.customPhotoContext = { sheetName, row };
+    elements.customPhotoInput.click();
+};
+
+elements.customPhotoInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !state.customPhotoContext) return;
+
+    showLoading('Memproses foto...');
+    try {
+        const compressedBlob = await compressImage(file);
+        const folderId = state.mapping[state.customPhotoContext.sheetName];
+        let folder = state.folders.find(f => f.id == folderId);
+        
+        if (!folder) {
+            // Create a "Custom" folder if no mapping exists yet
+            folder = { id: 'custom_' + Date.now(), name: 'Foto Tambahan', images: [] };
+            state.folders.push(folder);
+            state.mapping[state.customPhotoContext.sheetName] = folder.id;
+        }
+
+        const newImage = { 
+            name: 'Manual_' + file.name, 
+            data: compressedBlob, 
+            type: compressedBlob.type,
+            isCustom: true 
+        };
+        
+        folder.images.push(newImage);
+        const newIdx = folder.images.length - 1;
+
+        // Auto-select the newly added photo
+        const sheetName = state.customPhotoContext.sheetName;
+        const row = state.customPhotoContext.row;
+        if (!state.selectedPhotos[sheetName]) state.selectedPhotos[sheetName] = {};
+        if (!state.selectedPhotos[sheetName][row]) state.selectedPhotos[sheetName][row] = [];
+        state.selectedPhotos[sheetName][row].push(newIdx);
+
+        showToast('Foto berhasil ditambahkan', 'success');
+        renderActivities();
+    } catch (err) {
+        console.error(err);
+        showToast('Gagal memproses foto', 'error');
+    } finally {
+        hideLoading();
+        elements.customPhotoInput.value = ''; // Reset input
+        state.customPhotoContext = null;
+    }
 };
 
 /**
