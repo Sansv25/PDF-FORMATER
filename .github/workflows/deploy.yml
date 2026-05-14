@@ -28,6 +28,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Create Firebase Config File
+        run: |
+          mkdir -p assets/js
+          echo "${{ secrets.FIREBASE_CONFIG }}" > assets/js/firebase-config.js
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
