@@ -31,9 +31,7 @@ jobs:
       - name: Create Firebase Config File
         run: |
           mkdir -p assets/js
-          cat <<EOF > assets/js/firebase-config.js
-          ${{ secrets.FIREBASE_CONFIG }}
-          EOF
+          echo "${{ secrets.FIREBASE_CONFIG }}" > assets/js/firebase-config.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
