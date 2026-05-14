@@ -6,6 +6,9 @@
 let app, auth, database;
 
 function initAuth() {
+    // Jika sudah ada, jangan inisialisasi lagi agar tidak lambat
+    if (auth && database) return;
+
     try {
         if (typeof firebase === 'undefined') {
             throw new Error('Firebase SDK tidak terload dengan benar.');
@@ -57,18 +60,10 @@ function getSessionId() {
 
 // Login Function
 async function login(email, password) {
-    // Pastikan Firebase sudah siap
-    if (!auth || !database) {
-        console.log('Firebase belum siap, mencoba inisialisasi...');
-        await initAuth();
-    }
-    
-    if (!auth) {
-        return { success: false, message: 'Layanan Firebase gagal dimuat. Silakan cek koneksi internet dan refresh halaman.' };
-    }
+    if (!auth) return { success: false, message: 'Firebase belum siap.' };
 
     try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
+        await auth.signInWithEmailAndPassword(email, password);
         return { success: true };
     } catch (error) {
         console.error('Login Error:', error);
