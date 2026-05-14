@@ -162,16 +162,30 @@ function hideLoading() {
 }
 
 function goToStep(step) {
-    console.log(`Moving to Step ${step}`);
+    console.log(`Force Moving to Step ${step}`);
     state.currentStep = step;
+    
+    // Update Progress Bar
     elements.steps.forEach(s => {
         const sNum = parseInt(s.dataset.step);
         s.classList.toggle('active', sNum === step);
         s.classList.toggle('completed', sNum < step);
     });
+
+    // Update Content Visibility
     elements.contents.forEach(c => {
-        c.classList.toggle('active', c.id === `step-${step}`);
+        const isTarget = c.id === `step-${step}`;
+        c.classList.toggle('active', isTarget);
+        
+        // Tambahkan manipulasi display langsung agar lebih pasti pindah
+        if (isTarget) {
+            c.style.display = 'block';
+            console.log(`- Element ${c.id} set to block`);
+        } else {
+            c.style.display = 'none';
+        }
     });
+
     window.scrollTo(0, 0);
 
     if (step === 3) renderMapping();
